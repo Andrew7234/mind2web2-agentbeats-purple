@@ -24,16 +24,16 @@ def main():
     # See: https://a2a-protocol.org/latest/tutorials/python/3-agent-skills-and-card/
     
     skill = AgentSkill(
-        id="",
-        name="",
-        description="",
-        tags=[],
-        examples=[]
+        id="web-research",
+        name="Web Research",
+        description="Performs web research tasks and returns markdown answers with URL citations",
+        tags=["web-search", "research", "mind2web2"],
+        examples=["Find three U.S. patents in the field of autonomous driving published in the last year."]
     )
 
     agent_card = AgentCard(
-        name="",
-        description="",
+        name="Mind2Web-2 Research Agent",
+        description="Web research agent that answers complex information-gathering tasks with cited sources",
         url=args.card_url or f"http://{args.host}:{args.port}/",
         version='1.0.0',
         default_input_modes=['text'],

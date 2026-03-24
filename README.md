@@ -1,90 +1,67 @@
-# A2A Agent Template
+# Mind2Web-2 Research Agent (Purple Agent)
 
-A minimal template for building [A2A (Agent-to-Agent)](https://a2a-protocol.org/latest/) agents.
+A web research agent that answers complex information-gathering tasks with cited sources. This is the **purple agent** (competitor) in the AgentBeats Mind2Web-2 scenario.
+
+## How It Works
+
+Receives a research task description via A2A, calls an LLM to produce a markdown answer with URL citations, and returns the answer as an artifact. The agent instructs the LLM to:
+
+- Address every part of the task
+- Include specific markdown-formatted URL links to sources
+- Organize information with headings, lists, or tables
+- Provide concrete data points rather than vague summaries
 
 ## Project Structure
 
 ```
 src/
-├─ server.py      # Server setup and agent card configuration
+├─ server.py      # A2A server and agent card
 ├─ executor.py    # A2A request handling
-├─ agent.py       # Your agent implementation goes here
+├─ agent.py       # LLM-based research agent
 └─ messenger.py   # A2A messaging utilities
-tests/
-└─ test_agent.py  # Agent tests
-Dockerfile            # Docker configuration
-pyproject.toml        # Python dependencies
+Dockerfile            # Docker build
+pyproject.toml        # Dependencies
 amber-manifest.json5  # Amber manifest
-.github/
-└─ workflows/
-   └─ test-and-publish.yml # CI workflow
 ```
-
-## Getting Started
-
-1. **Create your repository** - Click "Use this template" to create your own repository from this template
-
-2. **Implement your agent** - Add your agent logic to [`src/agent.py`](src/agent.py)
-
-3. **Configure your agent card** - Fill in your agent's metadata (name, skills, description) in [`src/server.py`](src/server.py)
-
-4. **Fill out your [Amber](https://github.com/RDI-Foundation/amber) manifest** - Update [`amber-manifest.json5`](amber-manifest.json5) to use your agent in Amber scenarios
-
-5. **Write your tests** - Add custom tests for your agent in [`tests/test_agent.py`](tests/test_agent.py)
-
-For a concrete example of implementing an agent using this template, see this [draft PR](https://github.com/RDI-Foundation/agent-template/pull/8).
 
 ## Running Locally
 
 ```bash
-# Install dependencies
 uv sync
-
-# Run the server
-uv run src/server.py
+AGENT_LLM=gemini/gemini-2.0-flash GEMINI_API_KEY=... uv run src/server.py --port 9019
 ```
 
 ## Running with Docker
 
 ```bash
-# Build the image
-docker build -t my-agent .
-
-# Run the container
-docker run -p 9009:9009 my-agent
+docker build -t mind2web2-purple .
+docker run -p 9019:9009 -e AGENT_LLM=gemini/gemini-2.0-flash -e GEMINI_API_KEY=... mind2web2-purple
 ```
 
-## Testing
+## Environment Variables
 
-Run A2A conformance tests against your agent.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `AGENT_LLM` | no (default: `openai/gpt-4o-mini`) | LLM model in [litellm format](https://docs.litellm.ai/docs/providers) |
+| `GEMINI_API_KEY` | if using Gemini | Gemini API key |
+| `OPENAI_API_KEY` | if using OpenAI | OpenAI API key |
+| `ANTHROPIC_API_KEY` | if using Anthropic | Anthropic API key |
+| `DEEPSEEK_API_KEY` | if using DeepSeek | DeepSeek API key |
+| `AGENT_LLM_MAX_RETRIES` | no (default: `5`) | Max retry attempts for transient LLM errors |
+| `AGENT_LLM_BACKOFF_BASE` | no (default: `2`) | Exponential backoff base in seconds |
+
+## Running Both Agents Together
 
 ```bash
-# Install test dependencies
-uv sync --extra test
+# Terminal 1: Purple agent
+cd ~/oasis/agent-template
+AGENT_LLM=gemini/gemini-2.0-flash GEMINI_API_KEY=... uv run src/server.py --port 9019
 
-# Start your agent (uv or docker; see above)
+# Terminal 2: Green agent (evaluator)
+cd ~/oasis/green-agent-template
+AGENT_LLM=gemini/gemini-2.0-flash GEMINI_API_KEY=... uv run src/server.py --port 9009
 
-# Run tests against your running agent URL
-uv run pytest --agent-url http://localhost:9009
+# Terminal 3: Run evaluation
+cd ~/oasis/green-agent-template
+uv run test_run.py
 ```
-
-## Publishing
-
-The repository includes a GitHub Actions workflow that automatically builds, tests, and publishes a Docker image of your agent to GitHub Container Registry.
-
-If your agent needs API keys or other secrets, add them in Settings → Secrets and variables → Actions → Repository secrets. They'll be available as environment variables during CI tests.
-
-- **Push to `main`** → publishes `latest` tag:
-```
-ghcr.io/<your-username>/<your-repo-name>:latest
-```
-
-- **Create a git tag** (e.g. `git tag v1.0.0 && git push origin v1.0.0`) → publishes version tags:
-```
-ghcr.io/<your-username>/<your-repo-name>:1.0.0
-ghcr.io/<your-username>/<your-repo-name>:1
-```
-
-Once the workflow completes, find your Docker image in the Packages section (right sidebar of your repository). Configure the package visibility in package settings.
-
-> **Note:** Organization repositories may need package write permissions enabled manually (Settings → Actions → General). Version tags must follow [semantic versioning](https://semver.org/) (e.g., `v1.0.0`).
